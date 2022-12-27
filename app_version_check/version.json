@@ -1,0 +1,8 @@
+{
+  "version": "1.2.0",
+  "description": [
+    "Description 1",
+    "Description 2"
+  ],
+  "file_path": "installers/windows/app.exe"
+}
