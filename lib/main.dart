@@ -46,30 +46,26 @@ class _MyHomePageState extends State<MyHomePage> {
   double downloadProgress = 0;
   String downloadFilePath = "";
 
-  Future<Version> loadJson() async {
+  Future<Map<String, dynamic>> loadJson() async {
     Map<String, dynamic> json = jsonDecode(
         await rootBundle.loadString("app_version_check/version.json"));
-    Version version = Version();
-    version.version = json['version'];
-    version.description = json['description'];
-    version.filePath = json['file_path'];
-    return version;
+    return json;
   }
 
   Future<void> openExeFile(String filePath) async {
     await Process.start(filePath, ["-t", "-l", "1000"]).then((value) => {});
   }
 
-  Future<void> downloadNewVersion(String appPath) async {
-    final String fileName = appPath.split("/").last;
+  Future<void> downloadNewVersion(String filePath) async {
+    final String fileName = filePath.split("/").last;
     isDownloading = true;
     setState(() {});
 
     downloadFilePath = "${(await getTemporaryDirectory()).path}/$fileName";
 
     Dio dio = Dio();
-    dio.download(
-        "https://github.com/Doohyeon-Kim/flutter-in-app-update-for-windows.git/app_version_check/$appPath",
+    await dio.download(
+        filePath,
         downloadFilePath, onReceiveProgress: (received, total) {
       final progress = (received / total) * 100;
       debugPrint("Rec: $received, Total: $total, $progress%");
@@ -83,7 +79,6 @@ class _MyHomePageState extends State<MyHomePage> {
     isDownloading = false;
 
     setState(() {});
-    // await FvHttpClient.get(path: "https://github.com/Doohyeon-Kim/flutter-in-app-update-for-windows");
   }
 
   showUpdateDialog(Version version) {
@@ -92,16 +87,16 @@ class _MyHomePageState extends State<MyHomePage> {
         builder: (context) {
           return SimpleDialog(
             contentPadding: const EdgeInsets.all(8),
-            title: Text("Latest Version $version"),
+            title: Text("Latest Version ${version.version}"),
             children: [
-              Text("What's new in $version"),
+              Text("What's new in ${version.version}"),
               const SizedBox(
                 height: 4,
               ),
               if (version.version != ApplicationConfig.currentVersion)
                 TextButton.icon(
                     onPressed: () {
-                      downloadNewVersion(version.filePath!);
+                      downloadNewVersion("${version.repositoryUrl}/${version.filePath!}");
                       Navigator.pop(context);
                     },
                     icon: const Icon(Icons.update),
@@ -112,7 +107,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _checkForUpdate() async {
-    final Version version = await loadJson();
+    final Map<String, dynamic> json = await loadJson();
+
+    Version version = Version();
+    version.version = json['version'];
+    version.description = (json['description'] as List<dynamic>).map((e) => e as String).toList();
+    version.filePath = json['file_path'];
+    version.repositoryUrl = json['repository_url'];
+
     debugPrint("Response: $version");
     showUpdateDialog(version);
   }

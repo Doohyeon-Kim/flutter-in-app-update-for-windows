@@ -4,5 +4,6 @@
     "Description 1",
     "Description 2"
   ],
-  "file_path": "installers/windows/app.exe"
+  "file_path": "installers/windows/app.exe",
+  "repository_url": "https://github.com/Doohyeon-Kim/flutter-in-app-update-for-windows/blob/main/app_version_check/version.json"
 }
